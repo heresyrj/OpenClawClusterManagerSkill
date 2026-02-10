@@ -103,3 +103,24 @@ After any operation, report:
 2. Instance summary table with label/port/state dir
 3. Final audit result
 4. Remaining risk list
+
+## 7. Desktop App State Isolation
+
+If you use the OpenClaw desktop app, isolate its global state so it does not pollute the multi-instance root layout:
+
+```bash
+~/.openclaw/openclaw-desktop-state.sh setup --relaunch
+```
+
+Then validate:
+
+```bash
+~/.openclaw/openclaw-desktop-state.sh status
+```
+
+Expected:
+
+1. launchd env points to `~/.openclaw/.openclaw-app`
+2. `~/.openclaw/exec-approvals.json` is a symlink
+3. `~/.openclaw/exec-approvals.sock` is a symlink
+4. desktop app process uses `.openclaw-app/exec-approvals.sock`

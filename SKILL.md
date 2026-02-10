@@ -17,7 +17,8 @@ Enforce launchd-based lifecycle management, strict instance isolation, and repea
 3. Repair launchd/service issues before changing structure.
 4. Add or migrate instances with scripts instead of ad-hoc shell commands.
 5. Enforce Git backup policy per instance (`workspace` included, `.env` excluded).
-6. Re-audit and report final status.
+6. Isolate desktop app global state (`.openclaw-app`) from gateway instance states.
+7. Re-audit and report final status.
 
 ## Core Invariants
 
@@ -26,6 +27,7 @@ Enforce launchd-based lifecycle management, strict instance isolation, and repea
 3. Set `RunAtLoad=true` and `KeepAlive=true` on every instance plist.
 4. Keep each instance fully self-contained in `~/.openclaw/.openclaw-<name>/`.
 5. Do not manage long-running gateways from transient exec/shell sessions.
+6. Treat desktop app process state as a separate scope (`~/.openclaw/.openclaw-app`) and keep compatibility symlinks for fixed exec-approvals paths.
 
 ## Scripts
 
@@ -39,6 +41,8 @@ Use scripts from `scripts/` directly, or install them into `~/.openclaw`:
    - Create a new instance (state dir + plist + config + optional GitHub backup repo).
 4. `scripts/openclaw-migrate-root-state.sh`
    - Move legacy flat root state into `~/.openclaw/.openclaw-<instance>` safely.
+5. `scripts/openclaw-desktop-state.sh`
+   - Isolate desktop app state to `~/.openclaw/.openclaw-app`, migrate approvals/session artifacts, and maintain compatibility symlinks.
 
 ## Required Operation Order
 
@@ -46,6 +50,7 @@ Use scripts from `scripts/` directly, or install them into `~/.openclaw`:
 2. If audit fails, fix root causes before adding/migrating instances.
 3. After any create/migrate step, run `openclaw-fleet.sh status` and confirm ports are listening.
 4. Run Git backup checks from `references/backup-policy.md` before pushing.
+5. If desktop app is used, run `openclaw-desktop-state.sh status` and ensure approvals/socket point to `.openclaw-app`.
 
 ## References
 
@@ -59,6 +64,8 @@ Read only what is needed:
    - Root-state refactor procedure and rollback.
 4. `references/backup-policy.md`
    - What to include/exclude in per-instance backup repos.
+5. `references/desktop-app-state.md`
+   - Desktop app state isolation model, exec-approvals migration, and upgrade-safe compatibility strategy.
 
 ## Response Contract
 

@@ -100,3 +100,26 @@ To add instances beyond Luca/Critic:
 5. Run fleet audit
 
 No additional architecture change is required for N instances.
+
+## Desktop App Scope
+
+The OpenClaw desktop app is a separate process scope from gateway instances.
+
+Implications:
+
+1. It can write session and exec-approvals artifacts under `~/.openclaw` if not redirected.
+2. Gateway instances can remain healthy while desktop app still writes root-level files.
+
+Recommended model:
+
+1. Reserve `~/.openclaw/.openclaw-app` for desktop app state.
+2. Inject `OPENCLAW_STATE_DIR` / `CLAWDBOT_STATE_DIR` via a user LaunchAgent.
+3. Keep root compatibility symlinks for approvals and agents:
+   - `~/.openclaw/exec-approvals.json -> ~/.openclaw/.openclaw-app/exec-approvals.json`
+   - `~/.openclaw/exec-approvals.sock -> ~/.openclaw/.openclaw-app/exec-approvals.sock`
+   - `~/.openclaw/agents -> ~/.openclaw/.openclaw-app/agents`
+
+Reason:
+
+1. Current runtime supports state-dir env overrides.
+2. Exec approvals still have fixed default root paths in code, so symlink compatibility prevents split state.

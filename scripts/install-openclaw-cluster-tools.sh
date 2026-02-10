@@ -89,11 +89,13 @@ install_doc() {
 install_file "${SKILL_DIR}/scripts/openclaw-fleet.sh" "${DEST_ROOT}/openclaw-fleet.sh" 0755
 install_file "${SKILL_DIR}/scripts/openclaw-add-instance.sh" "${DEST_ROOT}/openclaw-add-instance.sh" 0755
 install_file "${SKILL_DIR}/scripts/openclaw-migrate-root-state.sh" "${DEST_ROOT}/openclaw-migrate-root-state.sh" 0755
+install_file "${SKILL_DIR}/scripts/openclaw-desktop-state.sh" "${DEST_ROOT}/openclaw-desktop-state.sh" 0755
 
 install_doc "${SKILL_DIR}/references/architecture.md" "${DEST_ROOT}/OPENCLAW_CLUSTER_ARCHITECTURE.md"
 install_doc "${SKILL_DIR}/references/operations.md" "${DEST_ROOT}/OPENCLAW_CLUSTER_OPERATIONS.md"
 install_doc "${SKILL_DIR}/references/migration-playbook.md" "${DEST_ROOT}/OPENCLAW_CLUSTER_MIGRATION.md"
 install_doc "${SKILL_DIR}/references/backup-policy.md" "${DEST_ROOT}/OPENCLAW_CLUSTER_BACKUP_POLICY.md"
+install_doc "${SKILL_DIR}/references/desktop-app-state.md" "${DEST_ROOT}/OPENCLAW_CLUSTER_DESKTOP_APP.md"
 
 echo
 echo "Installation complete."
