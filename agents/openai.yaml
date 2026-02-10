@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenClaw Cluster Ops"
+  short_description: "Operate multi-instance OpenClaw clusters"
+  default_prompt: "Use $openclaw-cluster-manager to audit, repair, migrate, and scale my local OpenClaw instances on macOS."
