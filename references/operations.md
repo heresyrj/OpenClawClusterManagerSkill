@@ -1,5 +1,34 @@
 # OpenClaw Cluster Operations
 
+## 0. CLI Instance Targeting
+
+**Default behavior:** `openclaw` CLI commands (gateway status/start/stop/health/probe) control the **main LaunchAgent** (`ai.openclaw.gateway` = Luca, port 18789). It does NOT auto-detect or switch between instances.
+
+**Target a specific instance** by setting `OPENCLAW_STATE_DIR`:
+
+```bash
+# Luca (default, usually not needed)
+OPENCLAW_STATE_DIR=~/.openclaw/.openclaw-luca openclaw gateway probe
+
+# Critic
+OPENCLAW_STATE_DIR=~/.openclaw/.openclaw-critic openclaw gateway probe
+```
+
+**For lifecycle management (start/stop/restart):** use `openclaw-fleet.sh` instead of `openclaw gateway start/stop`:
+
+```bash
+# Single instance up/down (disable-safe, KeepAlive won't revive)
+openclaw-fleet.sh up critic
+openclaw-fleet.sh down critic
+
+# All instances
+openclaw-fleet.sh start
+openclaw-fleet.sh stop
+openclaw-fleet.sh restart
+```
+
+**Why not `openclaw gateway stop`?** It only knows about the main service label. Fleet script handles all instances correctly, including disable to prevent KeepAlive auto-restart.
+
 ## 1. Install Canonical Tooling
 
 Run once per host:
@@ -25,28 +54,20 @@ Expected:
 
 ## 3. Lifecycle Operations
 
-Start all discovered instances:
+**Single instance (preferred for targeted control):**
 
 ```bash
-~/.openclaw/openclaw-fleet.sh start
+openclaw-fleet.sh up critic      # enable + bootstrap
+openclaw-fleet.sh down critic    # disable + bootout (stays down)
 ```
 
-Stop all:
+**All instances:**
 
 ```bash
-~/.openclaw/openclaw-fleet.sh stop
-```
-
-Restart all:
-
-```bash
-~/.openclaw/openclaw-fleet.sh restart
-```
-
-Ensure auto-start is enabled:
-
-```bash
-~/.openclaw/openclaw-fleet.sh enable-boot
+openclaw-fleet.sh start          # bootstrap all
+openclaw-fleet.sh stop           # bootout all
+openclaw-fleet.sh restart        # stop + start all
+openclaw-fleet.sh enable-boot    # ensure auto-start on login
 ```
 
 ## 4. Add a New Instance

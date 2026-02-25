@@ -22,6 +22,8 @@ Usage:
   openclaw-fleet.sh restart
   openclaw-fleet.sh status
   openclaw-fleet.sh enable-boot
+  openclaw-fleet.sh up <name>       Enable + bootstrap a single instance (e.g. "critic")
+  openclaw-fleet.sh down <name>     Disable + bootout a single instance (stays down)
 
 Environment:
   OPENCLAW_LAUNCH_AGENTS   Override LaunchAgents dir (default: ~/Library/LaunchAgents)
@@ -222,6 +224,73 @@ enable_boot_cmd() {
   done < <(discover_plists)
 }
 
+find_plist_by_name() {
+  local name="$1"
+  local target="ai.openclaw.${name}"
+  while IFS= read -r p; do
+    local label
+    label="$(plist_get "${p}" "Label")"
+    if [[ "${label}" == "${target}" ]]; then
+      echo "${p}"
+      return 0
+    fi
+  done < <(discover_plists)
+  echo "ERROR: no plist found for '${name}' (looked for label '${target}')" >&2
+  return 1
+}
+
+up_cmd() {
+  local name="${1:?Usage: openclaw-fleet.sh up <name>}"
+  local plist label
+  plist="$(find_plist_by_name "${name}")"
+  label="$(plist_get "${plist}" "Label")"
+
+  launchctl enable "gui/${UIDN}/${label}" 2>/dev/null || true
+  local out code
+  set +e
+  out="$(launchctl bootstrap "gui/${UIDN}" "${plist}" 2>&1)"
+  code=$?
+  set -e
+
+  if [[ ${code} -eq 0 ]]; then
+    echo "${label}: enabled + bootstrapped ✅"
+  elif echo "${out}" | grep -qiE "already loaded|already exists"; then
+    echo "${label}: already running"
+  else
+    echo "${label}: bootstrap failed — ${out}" >&2
+    return ${code}
+  fi
+
+  # Wait briefly and check port
+  sleep 2
+  local port
+  port="$(plist_get "${plist}" "EnvironmentVariables.OPENCLAW_GATEWAY_PORT")"
+  if [[ -n "${port}" ]] && lsof -nP -iTCP:"${port}" -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "${label}: port ${port} listening ✅"
+  else
+    echo "${label}: port ${port} not yet listening (may need a moment)"
+  fi
+}
+
+down_cmd() {
+  local name="${1:?Usage: openclaw-fleet.sh down <name>}"
+  local plist label
+  plist="$(find_plist_by_name "${name}")"
+  label="$(plist_get "${plist}" "Label")"
+
+  launchctl disable "gui/${UIDN}/${label}" 2>/dev/null || true
+  launchctl bootout "gui/${UIDN}/${label}" 2>/dev/null || true
+  echo "${label}: disabled + booted out ✅"
+
+  local port
+  port="$(plist_get "${plist}" "EnvironmentVariables.OPENCLAW_GATEWAY_PORT")"
+  if [[ -n "${port}" ]] && ! lsof -nP -iTCP:"${port}" -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "${label}: port ${port} confirmed closed ✅"
+  else
+    echo "${label}: port ${port} still listening (may take a moment to stop)"
+  fi
+}
+
 cmd="${1:-}"
 case "${cmd}" in
   list)
@@ -245,6 +314,12 @@ case "${cmd}" in
     ;;
   enable-boot)
     enable_boot_cmd
+    ;;
+  up)
+    up_cmd "${2:-}"
+    ;;
+  down)
+    down_cmd "${2:-}"
     ;;
   *)
     usage
